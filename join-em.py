@@ -37,6 +37,7 @@ def join_em(source_path, destination_path, tolerance=0.0001,
             segments_in_order.append(closest_segment)
             seg = closest_segment
         else: # Look for a segment adjactent to the start point
+            end_distance = distance
             closest_segment, start_or_end, distance = find_closest(start, src_segments, 
                 haversine_distance=haversine_distance)
             if closest_segment and distance < tolerance:
@@ -50,6 +51,7 @@ def join_em(source_path, destination_path, tolerance=0.0001,
                 seg = closest_segment
             else:
                 logging.error("Can't find a segment adjacent to start or end segment, giving up")
+                logging.error("closest distance to start:%f to end:%f" % (distance, end_distance))
                 break
 
     logging.info( "finished, segments in order:%i remaining segments:%i" 
