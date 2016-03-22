@@ -21,6 +21,7 @@ def join_em(source_path, destination_path, tolerance=0.0001,
 
     seg = src_segments.pop()
     segments_in_order = [seg]
+    flipped = False
     while len(src_segments) > 0:
         start = Point(seg.coords[0])
         end = Point(seg.coords[-1])
@@ -36,6 +37,7 @@ def join_em(source_path, destination_path, tolerance=0.0001,
                 closest_segment.coords = list(closest_segment.coords)[::-1]
             segments_in_order.append(closest_segment)
             seg = closest_segment
+            flipped = False
         else: # Look for a segment adjactent to the start point
             end_distance = distance
             closest_segment, start_or_end, distance = find_closest(start, src_segments, 
@@ -49,10 +51,19 @@ def join_em(source_path, destination_path, tolerance=0.0001,
                     closest_segment.coords = list(closest_segment.coords)[::-1]
                 segments_in_order.insert(0, closest_segment)
                 seg = closest_segment
+                flipped = False
             else:
-                logging.error("Can't find a segment adjacent to start or end segment, giving up")
-                logging.error("closest distance to start:%f to end:%f" % (distance, end_distance))
-                break
+                logging.error("Can't find a segment adjacent. Closest distance to start:%f to end:%f" % (distance, end_distance))
+                if flipped:
+                    logging.error("Can't find a segment adjacent to start or end segment, giving up")
+                    break
+                else:
+                    flipped = True
+                    segments_in_order = segments_in_order[::-1]
+                    for s in segments_in_order:
+                        s.coords = list(s.coords)[::-1]
+
+                    seg = segments_in_order[-1]
 
     logging.info( "finished, segments in order:%i remaining segments:%i" 
         % (len(segments_in_order), len(src_segments)))
@@ -156,7 +167,8 @@ def _main():
 
     if os.path.exists(dest):
         if options.overwrite:
-            shutil.rmtree(dest)
+            os.remove(dest)
+            #shutil.rmtree(dest)
         else:
             logging.error("Destination already exists. Will not overwrite")
             sys.exit(-1)
